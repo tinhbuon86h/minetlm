@@ -1,0 +1,270 @@
+﻿
+<!DOCTYPE html>
+<!-- saved from url=(0028)https://play.alienworlds.io/ -->
+<html lang="en-us">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>P'Meanow-Mine</title>    
+    <link rel="stylesheet" href="./js/style.css" />
+    <script src="./js/waxjs.js" type="text/javascript"></script>
+  </head>
+  <body style="background-color: rgb(151, 151, 151);">
+    <div class="webgl-content">
+      <button id="btn-controller" onclick="botRunningController()">START</button>      
+      <button id="btn-alert" onclick="botAlertController()">Alert ON</button>
+      <!-- <button id="btn-mine" onclick="botMine()">Claim now</button> -->
+      Timer mine:<input type="number" id="timer" name="timer" value="0" style="width: 50px;"> min
+      <button id="btn-claimn-nft" onclick="botClaimnNft()">Claim NFT</button>
+      <div>
+        CPU:<input type="number" id="cpu" name="cpu" value="0" style="width: 50px;"> % |
+       CPU Timer:<input type="number" id="cpu-timer" name="cpu-timer" value="3" style="width: 50px;"> min |
+        <input type="checkbox" id="auto-claimnfts" name="auto-claimnfts" checked onchange="autoClaimnNft()"> autoClaimnfts/1Hour
+       <div>
+        <input type="radio" id="ok-nonce" name="server" value="ok-nonce">
+        <label for="ok-nonce" style="color:darkgreen;">P'Meanow-Mine</label>
+        <input type="radio" id="alien" name="server" value="alien">
+        <label for="alien">Alien</label>
+        <input type="radio" id="ninjamine-vip" name="server" value="ninjamine-vip" checked>
+        <label for="ninjamine-vip" style="color:rgb(255, 255, 255)">Ninja VIP</label>
+       </div>
+      </div>
+      <div>
+        User:<span id="text-user" style="color:blue">xxx.wam</span>
+        Balance:<span id="text-balance" style="color:blue">0 TLM</span>
+        WAX:<span id="text-balance-wax" style="color:blue">0 WAX</span>
+        Cooldown:<span id="text-cooldown" style="color:blue">0 Sec</span>
+
+        <button id="save-config" onclick="saveConfig()">SaveConfig</button>
+        <button id="save-config" onclick="localStorage.clear();setTimeout((() => {loadConfig()}), 300)">Reset</button>
+      </div>
+      <textarea id="box-message" rows="8" style="resize: none;width: 500px;"></textarea>
+      <textarea id="box-message2" rows="5" style="resize: none;width: 500px;"></textarea>
+      <div>        
+        <input type="checkbox" id="auto-swap" name="auto-swap">Swap <input type="number" id="amount-swap" name="amount-swap" value="0" style="width: 40px;">TLM|
+        <input type="checkbox" id="auto-stake" name="auto-stake">Stake <input type="number" id="amount-stake" name="amount-stake" value="0" style="width: 40px;">WAX|        
+      </div>
+      <div>
+        <input type="checkbox" id="auto-transfer" name="auto-transfer">waxTransfer account :<input type="text" id="transfer-account" name="transfer-account" value="" style="width: 80px;"> memo:<input type="text" id="transfer-memo" name="transfer-memo" value="" style="width: 150px;">
+      </div>
+      <div>
+        LandID:<span id="text-land-id" style="color:blue"></span>
+        Name:<span id="text-land-name" style="color:blue"></span>
+        Com.:<span id="text-land-com" style="color:blue"></span>
+      </div>
+      <div>
+        Change land :
+        <input type="text" id="land-id" name="land-id" value="" style="width: 100px;" placeholder="Land id">
+        <button id="btn-change-land" onclick="changeLand()">Change</button>| Fail count : <span id="cpuFailCount" style="color:blue">0</span>/<span id="cpuFailLimit" style="color:blue">20</span>/<span id="cpuFailSum" style="color:blue">0</span>
+        <button id="save-config" onclick="localStorage.setItem('countCpu',JSON.stringify({cpuFailCount:0, cpuFailSum:0}))">Reset</button>
+      </div>
+      <div>
+        EndPoint : <select id="wax-domain" onchange="changeDomain(this.value)"></select>
+      </div>
+      <div style="margin-bottom: 3px;">
+         Rest : example m120, d30, mr120, dr30, m120, d10 | <span id="rest-display-setp" style="color:green"></span><span id="rest-display-action" style="color:green"></span><span id="rest-display-count-down" style="color:green"></span>
+         <br/>
+         <input type="text" id="config-rest" name="config-rest" value="" style="width: 250px;">
+
+         <select name="mining-pot" id="mining-pot" class="form-control-center form-control-sm" style="width: 150px;">
+          <option value="">Check MINING POT</option>
+          <option value="eyeke.world">Eyeke</option>
+          <option value="kavian.world">Kavian</option>
+          <option value="magor.world">Magor</option>
+          <option value="naron.world">Naron</option>
+          <option value="neri.world">Neri</option>
+          <option value="veles.world">Veles</option>
+          </select>
+      </div>
+    </div>
+
+    <script src="./js/bundleNew.js" type="text/javascript"></script>
+    <script src="./js/message_handler.js" type="text/javascript"></script>
+    <script src="./js/moment.js" type="text/javascript"></script>
+    <script src="./js/claim.js" type="text/javascript"></script>
+    <script src="./js/bot.js" type="text/javascript"></script>
+    <script type="text/javascript">            
+      var bott = new bot();
+      document.addEventListener("DOMContentLoaded", function(event) {
+        loadConfig();
+        setTimeout((() => {botRunningController()}), 500)        
+      });
+      function botRunningController(action){  
+          if(bott.isBotRunning == true){
+            clearInterval(bott.autoClaimnfts);
+            bott.stop()
+            document.getElementById("btn-controller").innerHTML = "START"
+          }else{            
+            bott.start()
+            if(document.getElementById("auto-claimnfts").checked == true){
+              bott.claimnftsController()
+            }else{
+              clearInterval(bott.autoClaimnfts);
+            }  
+            document.getElementById("btn-controller").innerHTML = "STOP"
+          }
+      }
+
+      function botAlertController(){
+        if(bott.alertCaptcha == true){
+          bott.alertCaptcha = false
+          document.getElementById("btn-alert").innerHTML = "Alert ON"
+        }else{
+          bott.alertCaptcha = true
+          document.getElementById("btn-alert").innerHTML = "Alert OFF"
+        }
+      }
+
+      function botClaimnNft(){
+        const userAccount = document.getElementById("text-user").innerHTML
+        if(userAccount != '' && userAccount != 'xxx.wax'){          
+          bott.getClaimnfts()
+        }else{
+          alert("userAccount isEmpty")
+        }
+      }
+
+      function autoClaimnNft(){
+        const userAccount = document.getElementById("text-user").innerHTML
+        if(userAccount != '' && userAccount != 'xxx.wax'){
+          console.log('autoClaimnNft',document.getElementById("auto-claimnfts").checked)
+          if(document.getElementById("auto-claimnfts").checked == true){
+            bott.claimnftsController()
+          }else{
+            clearInterval(bott.autoClaimnfts);
+          }         
+        }else{
+          alert("userAccount isEmpty")
+        }
+      }
+
+      async function botCheckDelay(){
+        const userAccount = document.getElementById("text-user").innerHTML
+        if(userAccount != '' && userAccount != 'xxx.wax'){
+          const delay = await bott.getUserMineDelay()
+          alert('MineDelay : ' + delay + ' ms')
+        }else{
+          alert("userAccount isEmpty")
+        }
+      }
+
+      function getValueRadio(name){
+        const radios = document.getElementsByName(name);
+        let result = '';
+        for (var i = 0, length = radios.length; i < length; i++) {
+          if (radios[i].checked) {
+            result = radios[i].value;
+            break;
+          }
+        }
+
+        return result;
+      }
+
+      function loadConfig(){
+        let config = localStorage.getItem('config')
+        if(config){
+          config = JSON.parse(config)
+          console.log('loadConfigJson',config)
+          document.getElementById("cpu").value = config.cpu
+          document.getElementById("timer").value = config.timer
+          document.getElementById("cpu-timer").value = config.cpuTimer
+
+          document.getElementById("auto-claimnfts").checked = config.autoClaimnfts
+          try{
+            document.getElementById(config.server).checked = true
+          } catch (error) {
+            console.error(error)
+          }        
+
+          document.getElementById("auto-swap").checked = config.autoSwap
+          document.getElementById("amount-swap").value = config.amountSwap
+
+          document.getElementById("auto-stake").checked = config.autoStake
+          document.getElementById("amount-stake").value = config.amountStake
+
+          document.getElementById("auto-stake").checked = config.autoStake
+          document.getElementById("amount-stake").value = config.amountStake
+
+          document.getElementById("auto-transfer").checked = (config.autoTransfer) ? config.autoTransfer : false
+          document.getElementById("transfer-account").value = (config.transferAccount) ? config.transferAccount : ""
+          document.getElementById("transfer-memo").value = (config.transferMemo) ? config.transferMemo : ""
+
+          document.getElementById("config-rest").value = (config.configRest) ? config.configRest : ""
+          if(config.miningPOT){
+            document.getElementById("mining-pot").value = config.miningPOT
+          }else{
+            document.getElementById("mining-pot").value = ""
+          }        
+        }else{
+          document.getElementById("cpu").value = '0'
+          document.getElementById("timer").value = '0'
+          document.getElementById("cpu-timer").value = '3'
+
+          document.getElementById("auto-claimnfts").checked = true
+          document.getElementById('ninjamine-vip').checked = true
+
+          document.getElementById("auto-swap").checked = false
+          document.getElementById("amount-swap").value = '0'
+
+          document.getElementById("auto-stake").checked = false
+          document.getElementById("amount-stake").value = '0'
+
+          document.getElementById("auto-transfer").checked = false
+          document.getElementById("transfer-account").value = ""
+          document.getElementById("transfer-memo").value = ""
+
+          document.getElementById("config-rest").value = ""
+          document.getElementById("mining-pot").value = ""
+        }
+      }
+
+      const saveConfig = ()=>{
+        const config = {
+          cpu : document.getElementById("cpu").value,
+          timer : document.getElementById("timer").value,
+          cpuTimer : document.getElementById("cpu-timer").value,
+          autoClaimnfts : document.getElementById("auto-claimnfts").checked,
+          server : document.querySelector('input[name="server"]:checked').value,   
+          autoSwap : document.getElementById("auto-swap").checked,       
+          amountSwap : document.getElementById("amount-swap").value,
+
+          autoStake : document.getElementById("auto-stake").checked,
+          amountStake : document.getElementById("amount-stake").value,
+
+          autoTransfer : document.getElementById("auto-transfer").checked,
+          transferAccount : document.getElementById("transfer-account").value,
+          transferMemo : document.getElementById("transfer-memo").value,
+
+          configRest : document.getElementById("config-rest").value,
+          miningPOT : document.getElementById("mining-pot").value
+        }
+        console.log('saveConfig',config)
+        localStorage.setItem('config',JSON.stringify(config))
+      }
+
+      waxDomain.forEach(function(v,i){
+        document.getElementById("wax-domain").insertAdjacentHTML('beforeend',`<option value="${i}" ${(localStorage.getItem('waxDomain') && i == localStorage.getItem('waxDomain') ? 'selected' : '')}>${v}</option>`)
+      });
+
+      function changeDomain(index){
+        localStorage.setItem('waxDomain',index)        
+        setTimeout((() => { location.reload() } ), 500)   
+      }
+
+      async function changeLand(){
+        const landID = document.getElementById("land-id").value
+        console.log('changeLand', landID)
+        if(landID.length === 13 && parseInt(landID) > 1000000000000){
+          await bott.changeLand(landID)
+        }else{
+          alert('LandID is not empty')
+        }
+      }
+    </script>
+  </body>
+</html>
